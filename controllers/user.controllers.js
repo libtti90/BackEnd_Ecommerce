@@ -1,6 +1,8 @@
 const User = require('../models/user.model')
-const bcrypt=require('bcrypt')
+const bcrypt = require('bcrypt')
 const saltRounds = 10;
+var jwt = require('jsonwebtoken');
+var secret = 'alfabeta';
 
 
 
@@ -19,21 +21,22 @@ async function getUser(req, res) {
                     ok: false,
                     message: "User not found"
                 })
-                user.password=undefined;
+            user.password = undefined;
             return res.send({
-                ok:true,
+                ok: true,
                 user,
-                message:'User found'
+                message: 'User found'
             })
         }
 
         const users = await User.find()
+        .select({password:0, _v:0})
         res.send({
-            ok:true,
+            ok: true,
             users,
-            message:"Users found"
+            message: "Users found"
 
-        })
+        });
 
 
 
@@ -54,22 +57,22 @@ async function createUser(req, res) {
         const user = new User(req.body);
 
         user.password = await bcrypt.hash(user.password, saltRounds)
-        
-        
+
+
         console.log(user)
 
-        const userSaved=await user.save()
+        const userSaved = await user.save()
 
-        userSaved.password=undefined
+        userSaved.password = undefined
 
         console.log(userSaved)
 
 
 
         res.status(201).send({
-            ok:true,
-            message:'New user created',
-            user:userSaved
+            ok: true,
+            message: 'New user created',
+            user: userSaved
         })
 
     } catch (error) {
@@ -84,17 +87,35 @@ async function createUser(req, res) {
 //delete 
 async function deleteUser(req, res) {
 
-
+console.log(req.user.role);
     try {
-        console.log(req.params.idUser)
-        const id = req.params.idUser
-        const userDeleted = await User.findByIdAndDelete(id)
+        if (req.user.role !== "ADMIN_USER") {
+            return res.status(403).send({
+                ok:false,
+                message:"You don't have permission to delete users"
+            });
+   
+          }
+        const id = req.params.idUser;
+        
+          
+        const userDeleted = await User.findByIdAndDelete(id);
+
+
+        if(!userDeleted){
+            return res.status(404).send({
+                ok:false,
+                message:"User not found"
+            })
+        }
         res.send({
             ok: true,
             message: "User deleted",
             user: userDeleted
-        })
-    } catch (error) {
+        });
+    } 
+    
+    catch (error) {
         console.log(error)
 
     }
@@ -109,6 +130,13 @@ async function deleteUser(req, res) {
 
 async function editUser(req, res) {
     try {
+        if (req.user.role !== "ADMIN_USER") {
+            return res.status(403).send({
+                ok:false,
+                message:"You don't have permission to delete users"
+            });
+   
+          }
 
         const id = req.params.id;
         const nuevosValores = req.body;
@@ -133,8 +161,56 @@ async function editUser(req, res) {
             message: "Usuario no actualizado"
         });
     }
-}
+};
 
+//LOGIN
+async function login(req, res) {
+    try {
+        
+const { password, email } = req.body;
+
+        if (!password || !email) {
+            return res.status(400).send({
+                ok: false,
+                message: "Information is missing"
+            })
+        }
+ const user = await User.findOne({ email: email.toLowerCase() })
+
+     if (!user) {
+            return res.status(404).send({
+                ok: false,
+                message: "Information is missing"
+            });
+        }
+
+const passwordToCheck = await bcrypt.compare(password, user?.password)
+
+        if (!passwordToCheck) {
+            return res.status(404).send({
+                ok: false,
+                message: "Information is missing"
+            });
+        }
+        user.password = undefined;
+
+        const token=jwt.sign({ user },secret);
+
+        res.send({
+            ok: true,
+            message: "Login successful",
+            user,
+            token
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).send({
+            ok: false,
+            message: "Login unsuccessful"
+        })
+    }
+}
 
 //exporto
 module.exports = {
@@ -142,6 +218,7 @@ module.exports = {
     deleteUser,
     getUser,
     editUser,
+    login
 }
 
 
