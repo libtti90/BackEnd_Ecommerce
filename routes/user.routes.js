@@ -1,7 +1,9 @@
 const express =require("express");
 const router=express.Router();
 const userController=require('../controllers/user.controllers');
-const jwtVerify=require('../middlewares/isAuth')
+const jwtVerify=require('../middlewares/isAuth');
+const isAdmin=require('../middlewares/isAdmin');
+const uploadUser=require('../middlewares/uploadUserFile');
 
 
 
@@ -9,12 +11,14 @@ const jwtVerify=require('../middlewares/isAuth')
 //obtener usuarios
 router.get('/users/:id?', userController.getUser);
 //agregar nuevo usuario
-router.post('/users',userController.createUser);
+
+router.post('/users',uploadUser, userController.createUser);
+
 //eliminar
-router.delete('/users/:idUser',jwtVerify, userController.deleteUser);
+router.delete('/users/:idUser',[jwtVerify,isAdmin], userController.deleteUser);
 
 //actualizar un usuario 
-router.put('/users/:id', jwtVerify, userController.editUser);
+router.put('/users/:id', [jwtVerify,isAdmin], userController.editUser);
 
 //login
 router.post('/login',userController.login);

@@ -53,30 +53,35 @@ async function getUser(req, res) {
 
 //funcion create usuario
 async function createUser(req, res) {
+    
+    
     try {
         const user = new User(req.body);
+        if(req.file?.filename){
+            user.image=req.file.filename
+        }
 
-        user.password = await bcrypt.hash(user.password, saltRounds)
+        user.password = await  bcrypt.hash(user.password, saltRounds);
 
+      
+        const userSaved = await user.save();
 
-        console.log(user)
-
-        const userSaved = await user.save()
-
-        userSaved.password = undefined
+        userSaved.password=undefined
 
         console.log(userSaved)
 
 
-
         res.status(201).send({
+        
             ok: true,
-            message: 'New user created',
+            message: "Usuario created",
             user: userSaved
+        
         })
 
     } catch (error) {
         res.status(500).send(error)
+        console.log(error)
     }
 };
 

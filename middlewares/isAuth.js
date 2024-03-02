@@ -3,23 +3,22 @@ const secret = 'alfabeta';
 
 function jwtVerify(req,res,next){
 const token=req.headers.authorization;
-
-
-jwt.verify(token,secret,(error,payload)=>{
 if(!token){
     return res.status(400).send({
         ok:false,
-        message:"token no received"
+        message:"token no provided"
     })
 }
-    //el token es incorrecto, tiene error debo cortar request y devolver una respuesta.
+
+jwt.verify(token,secret,(error,payload)=>{
+
     if(error){
-        return res.status(404).send({
+        return res.status(401).send({
             ok:false,
-            message:"no tiene authorizacion"
+            message:"no authorization"
         })
     }
-     //el token correcto, debo continuar con la ejecucion de la peticion y agregar el payload a la respuesta.
+     
      req.user=payload.user;
 
      next();

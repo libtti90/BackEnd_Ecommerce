@@ -1,4 +1,8 @@
 const Product = require('../models/product.model')
+const bcrypt = require('bcrypt')
+const saltRounds = 10;
+var jwt = require('jsonwebtoken');
+var secret = 'alfabeta';
 
 async function getProduct(req, res) {
 
@@ -6,6 +10,8 @@ async function getProduct(req, res) {
         const id = req.params.id;
         if (id) {
             const product = await Product.findById(id)
+            
+            
 
             if (!product)
                 return res.status(404).send({
@@ -20,7 +26,7 @@ async function getProduct(req, res) {
                 })
         }
 
-        const products = await Product.find()
+        const products = await Product.find();
         res.send({
             ok:true,
             products,
@@ -40,12 +46,18 @@ async function getProduct(req, res) {
 };
 
 async function createProduct(req, res) {
-
+   
     try {
+       
+        
         const product = new Product(req.body);
-        console.log(product)
+        if(req.file?.filename){
+            product.image=req.file.filename
+            
+        }
+        
         const productSaved=await product.save()
-        console.log(productSaved)
+        
 
 
 
@@ -57,7 +69,7 @@ async function createProduct(req, res) {
         })
 
     } catch (error) {
-        res.send("Error")
+        res.status(500).send(error)
     }
 
 
@@ -65,22 +77,39 @@ async function createProduct(req, res) {
 
 async function deleteProduct(req,res){
     try {
+        if (req.user.role !== "ADMIN_USER") {
+            return res.status(403).send({
+                ok:false,
+                message:"You don't have permission to delete products"
+            });
+   
+          }
         const id=req.params.idProduct
         
-        const productDeleted=await Product.findByIdAndDelete(id)
+        const productDeleted=await Product.findByIdAndDelete(id);
+        
         res.send({
             ok:true,
-            message:"Product deleted",
+            message:"Product deleted successfully",
             product:productDeleted
         })
     } catch (error) {
         console.log("error")
+        return res.status(500).send({
+            ok:false,
+            message:"Failed to delete products"
+        })
     }
     
 }
 
 async function editProduct(req, res) {
-    try {
+    try { 
+        if(req.user.role !== "ADMIN_USER"){
+            return res.status(403).send({ok:false,
+            message:"You don't have permission to edit products"});
+        }
+             
        
         const id = req.params.id;
         const newValues = req.body;  
@@ -95,6 +124,7 @@ async function editProduct(req, res) {
             message: "Product updated",
             user: productUpdated
         });
+
     } catch (error) {
         
         console.log(error);
