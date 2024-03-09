@@ -56,6 +56,7 @@ async function createUser(req, res) {
     
     
     try {
+        
         const user = new User(req.body);
         if(req.file?.filename){
             user.image=req.file.filename

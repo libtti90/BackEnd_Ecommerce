@@ -46,13 +46,15 @@ async function getProduct(req, res) {
 };
 
 async function createProduct(req, res) {
-   
+  console.log(req.file)
     try {
        
         
         const product = new Product(req.body);
+
         if(req.file?.filename){
             product.image=req.file.filename
+            
             
         }
         

@@ -3,7 +3,9 @@ const router = express.Router();
 const productController=require('../controllers/product.controllers')
 const jwtVerify=require('../middlewares/isAuth');
 const isAdmin=require('../middlewares/isAdmin')
-const upload=require('../middlewares/uploadUserFile')
+const upload=require('../middlewares/uploadProductFile')
+
+
 
 
 //router.get('/products',productController.getProduct);
